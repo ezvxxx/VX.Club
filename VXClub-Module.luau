@@ -1,10 +1,16 @@
 --[[
     VX.Club UI Library — macOS-Inspired Roblox UI
-    Themes: Dark / White
-    Gradients: Blue, Red, Purple, Teal, Orange, Pink, Emerald, Sunset, Ocean, Neon
+    Themes: Dark / White / Gradient Themes / Liquid Glass
+    Gradients: Blue, Red, Purple, Teal, Orange, Pink, Emerald, Sunset, Ocean, Neon, Frost, Lime, Rose, Indigo, Amber
     
     Author: VX.Club
-    Version: 2.0.0
+    Version: 3.0.0
+
+    CHANGELOG v3:
+    - Gradients are now FULL THEMES (not just notification colors)
+    - Complete theme system: ALL elements update on theme change
+    - Liquid Glass mode (Apple-style frosted translucent glass)
+    - Fixed: all cards/sections/elements properly update colors
 ]]
 
 local VXClub = {}
@@ -17,13 +23,14 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local CoreGui = game:GetService("CoreGui")
+local Lighting = game:GetService("Lighting")
 
 local Player = Players.LocalPlayer
 local Mouse = Player:GetMouse()
 
--- ══════════════════════════════════════════════════════════════
+-- ================================================================
 -- THEME & GRADIENT DEFINITIONS
--- ══════════════════════════════════════════════════════════════
+-- ================================================================
 
 local Themes = {
     Dark = {
@@ -44,6 +51,7 @@ local Themes = {
         TextMuted = Color3.fromRGB(100, 100, 110),
         Accent = Color3.fromRGB(60, 130, 246),
         AccentHover = Color3.fromRGB(80, 145, 255),
+        AccentDark = Color3.fromRGB(40, 100, 200),
         ToggleOn = Color3.fromRGB(60, 130, 246),
         ToggleOff = Color3.fromRGB(70, 70, 75),
         SliderTrack = Color3.fromRGB(50, 50, 55),
@@ -84,6 +92,7 @@ local Themes = {
         TextMuted = Color3.fromRGB(150, 150, 160),
         Accent = Color3.fromRGB(0, 122, 255),
         AccentHover = Color3.fromRGB(0, 100, 220),
+        AccentDark = Color3.fromRGB(0, 80, 180),
         ToggleOn = Color3.fromRGB(0, 122, 255),
         ToggleOff = Color3.fromRGB(200, 200, 208),
         SliderTrack = Color3.fromRGB(215, 215, 222),
@@ -109,71 +118,95 @@ local Themes = {
 }
 
 local Gradients = {
-    Blue = {
-        Start = Color3.fromRGB(59, 130, 246),
-        End = Color3.fromRGB(37, 99, 235)
-    },
-    Red = {
-        Start = Color3.fromRGB(239, 68, 68),
-        End = Color3.fromRGB(220, 38, 38)
-    },
-    Purple = {
-        Start = Color3.fromRGB(147, 51, 234),
-        End = Color3.fromRGB(126, 34, 206)
-    },
-    Teal = {
-        Start = Color3.fromRGB(20, 184, 166),
-        End = Color3.fromRGB(13, 148, 136)
-    },
-    Orange = {
-        Start = Color3.fromRGB(249, 115, 22),
-        End = Color3.fromRGB(234, 88, 12)
-    },
-    Pink = {
-        Start = Color3.fromRGB(236, 72, 153),
-        End = Color3.fromRGB(219, 39, 119)
-    },
-    Emerald = {
-        Start = Color3.fromRGB(16, 185, 129),
-        End = Color3.fromRGB(5, 150, 105)
-    },
-    Sunset = {
-        Start = Color3.fromRGB(251, 146, 60),
-        End = Color3.fromRGB(236, 72, 153)
-    },
-    Ocean = {
-        Start = Color3.fromRGB(6, 182, 212),
-        End = Color3.fromRGB(59, 130, 246)
-    },
-    Neon = {
-        Start = Color3.fromRGB(168, 85, 247),
-        End = Color3.fromRGB(236, 72, 153)
-    },
-    Frost = {
-        Start = Color3.fromRGB(99, 179, 237),
-        End = Color3.fromRGB(190, 227, 248)
-    },
-    Lime = {
-        Start = Color3.fromRGB(132, 204, 22),
-        End = Color3.fromRGB(34, 197, 94)
-    },
-    Rose = {
-        Start = Color3.fromRGB(244, 63, 94),
-        End = Color3.fromRGB(251, 113, 133)
-    },
-    Indigo = {
-        Start = Color3.fromRGB(79, 70, 229),
-        End = Color3.fromRGB(99, 102, 241)
-    },
-    Amber = {
-        Start = Color3.fromRGB(245, 158, 11),
-        End = Color3.fromRGB(252, 211, 77)
-    },
+    Blue     = { Start = Color3.fromRGB(59, 130, 246),  End = Color3.fromRGB(37, 99, 235) },
+    Red      = { Start = Color3.fromRGB(239, 68, 68),   End = Color3.fromRGB(220, 38, 38) },
+    Purple   = { Start = Color3.fromRGB(147, 51, 234),  End = Color3.fromRGB(126, 34, 206) },
+    Teal     = { Start = Color3.fromRGB(20, 184, 166),  End = Color3.fromRGB(13, 148, 136) },
+    Orange   = { Start = Color3.fromRGB(249, 115, 22),  End = Color3.fromRGB(234, 88, 12) },
+    Pink     = { Start = Color3.fromRGB(236, 72, 153),  End = Color3.fromRGB(219, 39, 119) },
+    Emerald  = { Start = Color3.fromRGB(16, 185, 129),  End = Color3.fromRGB(5, 150, 105) },
+    Sunset   = { Start = Color3.fromRGB(251, 146, 60),  End = Color3.fromRGB(236, 72, 153) },
+    Ocean    = { Start = Color3.fromRGB(6, 182, 212),   End = Color3.fromRGB(59, 130, 246) },
+    Neon     = { Start = Color3.fromRGB(168, 85, 247),  End = Color3.fromRGB(236, 72, 153) },
+    Frost    = { Start = Color3.fromRGB(99, 179, 237),  End = Color3.fromRGB(190, 227, 248) },
+    Lime     = { Start = Color3.fromRGB(132, 204, 22),  End = Color3.fromRGB(34, 197, 94) },
+    Rose     = { Start = Color3.fromRGB(244, 63, 94),   End = Color3.fromRGB(251, 113, 133) },
+    Indigo   = { Start = Color3.fromRGB(79, 70, 229),   End = Color3.fromRGB(99, 102, 241) },
+    Amber    = { Start = Color3.fromRGB(245, 158, 11),  End = Color3.fromRGB(252, 211, 77) },
 }
 
--- ══════════════════════════════════════════════════════════════
+-- Helper: lerp a color toward white/black to make lighter/darker variants
+local function lerpColor(c1, c2, alpha)
+    return Color3.new(
+        c1.R + (c2.R - c1.R) * alpha,
+        c1.G + (c2.G - c1.G) * alpha,
+        c1.B + (c2.B - c1.B) * alpha
+    )
+end
+
+-- Build gradient-based themes dynamically (Dark base + gradient tint)
+local function buildGradientTheme(gradName, grad)
+    local base = Themes.Dark
+    local tint = lerpColor(grad.Start, grad.End, 0.5) -- midpoint
+    local darkTint = lerpColor(tint, Color3.fromRGB(0, 0, 0), 0.85) -- very dark version
+    local medTint = lerpColor(tint, Color3.fromRGB(0, 0, 0), 0.7)
+    local lightTint = lerpColor(tint, Color3.fromRGB(0, 0, 0), 0.55)
+
+    return {
+        Name = gradName,
+        IsGradientTheme = true,
+        GradientName = gradName,
+        WindowBackground = lerpColor(Color3.fromRGB(22, 22, 26), tint, 0.08),
+        TitleBar = lerpColor(Color3.fromRGB(30, 30, 34), tint, 0.1),
+        SidebarBackground = lerpColor(Color3.fromRGB(18, 18, 22), tint, 0.06),
+        SidebarTabHover = lerpColor(Color3.fromRGB(45, 45, 50), tint, 0.12),
+        SidebarTabActive = lerpColor(Color3.fromRGB(50, 50, 56), tint, 0.15),
+        ContentBackground = lerpColor(Color3.fromRGB(22, 22, 26), tint, 0.08),
+        SectionBackground = lerpColor(Color3.fromRGB(32, 32, 36), tint, 0.1),
+        SectionBorder = lerpColor(Color3.fromRGB(50, 50, 56), tint, 0.18),
+        ElementBackground = lerpColor(Color3.fromRGB(42, 42, 48), tint, 0.12),
+        ElementBackgroundHover = lerpColor(Color3.fromRGB(55, 55, 60), tint, 0.15),
+        ElementBorder = lerpColor(Color3.fromRGB(60, 60, 68), tint, 0.2),
+        TextPrimary = Color3.fromRGB(240, 240, 245),
+        TextSecondary = Color3.fromRGB(160, 160, 175),
+        TextMuted = Color3.fromRGB(110, 110, 125),
+        Accent = grad.Start,
+        AccentHover = lerpColor(grad.Start, Color3.fromRGB(255, 255, 255), 0.15),
+        AccentDark = lerpColor(grad.Start, Color3.fromRGB(0, 0, 0), 0.3),
+        ToggleOn = grad.Start,
+        ToggleOff = lerpColor(Color3.fromRGB(65, 65, 72), tint, 0.1),
+        SliderTrack = lerpColor(Color3.fromRGB(45, 45, 50), tint, 0.1),
+        SliderFill = grad.Start,
+        InputBackground = lerpColor(Color3.fromRGB(18, 18, 22), tint, 0.06),
+        InputBorder = lerpColor(Color3.fromRGB(55, 55, 62), tint, 0.15),
+        InputFocusBorder = grad.Start,
+        DropdownBackground = lerpColor(Color3.fromRGB(28, 28, 32), tint, 0.08),
+        DropdownItemHover = lerpColor(Color3.fromRGB(45, 45, 50), tint, 0.15),
+        NotificationBackground = lerpColor(Color3.fromRGB(30, 30, 35), tint, 0.1),
+        NotificationBorder = lerpColor(Color3.fromRGB(50, 50, 58), tint, 0.18),
+        DialogOverlay = Color3.fromRGB(0, 0, 0),
+        DialogOverlayTransparency = 0.4,
+        DialogBackground = lerpColor(Color3.fromRGB(35, 35, 40), tint, 0.1),
+        DividerColor = lerpColor(Color3.fromRGB(48, 48, 55), tint, 0.15),
+        ScrollbarColor = lerpColor(Color3.fromRGB(75, 75, 82), tint, 0.2),
+        Shadow = Color3.fromRGB(0, 0, 0),
+        ShadowTransparency = 0.55,
+        TrafficClose = Color3.fromRGB(255, 95, 87),
+        TrafficMinimize = Color3.fromRGB(255, 189, 46),
+        TrafficMaximize = Color3.fromRGB(39, 201, 63),
+        GradientStart = grad.Start,
+        GradientEnd = grad.End,
+    }
+end
+
+-- Register gradient themes
+for name, grad in pairs(Gradients) do
+    Themes[name] = buildGradientTheme(name, grad)
+end
+
+-- ================================================================
 -- UTILITY FUNCTIONS
--- ══════════════════════════════════════════════════════════════
+-- ================================================================
 
 local Utilities = {}
 
@@ -242,8 +275,16 @@ function Utilities.AddGradient(parent, startColor, endColor, rotation)
     })
 end
 
+function Utilities.RemoveGradients(parent)
+    for _, child in ipairs(parent:GetChildren()) do
+        if child:IsA("UIGradient") then
+            child:Destroy()
+        end
+    end
+end
+
 function Utilities.AddShadow(parent, color, transparency, size)
-    local shadow = Utilities.Create("ImageLabel", {
+    return Utilities.Create("ImageLabel", {
         Name = "Shadow",
         BackgroundTransparency = 1,
         Position = UDim2.new(0.5, 0, 0.5, 4),
@@ -257,7 +298,6 @@ function Utilities.AddShadow(parent, color, transparency, size)
         SliceCenter = Rect.new(49, 49, 450, 450),
         Parent = parent
     })
-    return shadow
 end
 
 function Utilities.MakeRipple(parent, position, color)
@@ -282,13 +322,13 @@ function Utilities.MakeRipple(parent, position, color)
     end)
 end
 
-local smoothTween = TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+local smoothTween = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 local fastTween = TweenInfo.new(0.15, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 local springTween = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
--- ══════════════════════════════════════════════════════════════
+-- ================================================================
 -- LIBRARY CORE
--- ══════════════════════════════════════════════════════════════
+-- ================================================================
 
 local ActiveWindows = {}
 local SaveFolder = "VXClub"
@@ -305,6 +345,21 @@ function VXClub:GetGradients()
     return Gradients
 end
 
+function VXClub:GetThemeNames()
+    local names = {"Dark", "White"}
+    for name in pairs(Gradients) do
+        table.insert(names, name)
+    end
+    table.sort(names, function(a, b)
+        if a == "Dark" then return true end
+        if b == "Dark" then return false end
+        if a == "White" then return true end
+        if b == "White" then return false end
+        return a < b
+    end)
+    return names
+end
+
 function VXClub:Window(config)
     config = config or {}
     local windowConfig = {
@@ -317,16 +372,30 @@ function VXClub:Window(config)
         ShowUserInfo = config.ShowUserInfo ~= false,
         Keybind = config.Keybind or Enum.KeyCode.RightControl,
         AcrylicBlur = config.AcrylicBlur ~= false,
+        LiquidGlass = config.LiquidGlass or false,
         DisabledWindowControls = config.DisabledWindowControls or {},
     }
 
     local currentTheme = Themes[windowConfig.Theme] or Themes.Dark
-    local accentGrad = windowConfig.AccentGradient and Gradients[windowConfig.AccentGradient]
+    local currentAccentGrad = windowConfig.AccentGradient and Gradients[windowConfig.AccentGradient] or nil
+    local liquidGlassEnabled = windowConfig.LiquidGlass
+
+    -- If theme is a gradient theme, use its gradient
+    if currentTheme.IsGradientTheme then
+        currentAccentGrad = { Start = currentTheme.GradientStart, End = currentTheme.GradientEnd }
+    end
+
+    -- Track all UI elements for theme updates
+    local registeredElements = {}
+
+    local function registerElement(element, updateFn)
+        table.insert(registeredElements, { element = element, update = updateFn })
+    end
 
     local Window = {
         Settings = windowConfig,
         Theme = currentTheme,
-        Gradient = accentGrad,
+        Gradient = currentAccentGrad,
         Tabs = {},
         TabGroups = {},
         GlobalSettings = {},
@@ -334,13 +403,38 @@ function VXClub:Window(config)
         IsMinimized = false,
         NotificationsEnabled = true,
         AcrylicBlurEnabled = windowConfig.AcrylicBlur,
+        LiquidGlassEnabled = liquidGlassEnabled,
         ShowUserInfoEnabled = windowConfig.ShowUserInfo,
         UnloadCallbacks = {},
         ThemeChangedCallbacks = {},
         Elements = {},
     }
 
-    -- Screen GUI
+    -- ================================================================
+    -- LIQUID GLASS TRANSPARENCY VALUES
+    -- ================================================================
+    local GLASS = {
+        Window = 0.15,
+        TitleBar = 0.25,
+        Sidebar = 0.2,
+        Section = 0.3,
+        Element = 0.35,
+        Notification = 0.25,
+        Dialog = 0.2,
+        Dropdown = 0.2,
+        Input = 0.3,
+    }
+
+    local function getTransparency(key)
+        if liquidGlassEnabled then
+            return GLASS[key] or 0.25
+        end
+        return 0
+    end
+
+    -- ================================================================
+    -- SCREEN GUI
+    -- ================================================================
     local screenGui = Utilities.Create("ScreenGui", {
         Name = "VXClub_" .. windowConfig.Title:gsub("%s+", ""),
         ResetOnSpawn = false,
@@ -351,51 +445,54 @@ function VXClub:Window(config)
 
     -- Blur Effect
     local blurEffect
-    if windowConfig.AcrylicBlur then
+    if windowConfig.AcrylicBlur or liquidGlassEnabled then
         blurEffect = Utilities.Create("BlurEffect", {
             Name = "VXClubBlur",
-            Size = 12,
-            Parent = game:GetService("Lighting")
+            Size = liquidGlassEnabled and 20 or 12,
+            Parent = Lighting
         })
     end
 
-    -- Main Window Frame
+    -- ================================================================
+    -- MAIN WINDOW FRAME
+    -- ================================================================
     local mainFrame = Utilities.Create("Frame", {
         Name = "MainWindow",
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.new(0.5, 0, 0.5, 0),
         Size = windowConfig.Size,
         BackgroundColor3 = currentTheme.WindowBackground,
+        BackgroundTransparency = getTransparency("Window"),
         ClipsDescendants = true,
         Parent = screenGui
     })
     Utilities.AddCorner(mainFrame, 12)
-    Utilities.AddStroke(mainFrame, currentTheme.SectionBorder, 1, 0.5)
+    local mainStroke = Utilities.AddStroke(mainFrame, currentTheme.SectionBorder, 1, 0.5)
     Utilities.AddShadow(mainFrame, currentTheme.Shadow, currentTheme.ShadowTransparency, 50)
 
-    -- ═══════════════════════════════════════
+    -- ================================================================
     -- TITLE BAR
-    -- ═══════════════════════════════════════
+    -- ================================================================
     local titleBar = Utilities.Create("Frame", {
         Name = "TitleBar",
         Size = UDim2.new(1, 0, 0, 42),
         BackgroundColor3 = currentTheme.TitleBar,
+        BackgroundTransparency = getTransparency("TitleBar"),
         BorderSizePixel = 0,
         Parent = mainFrame
     })
     Utilities.AddCorner(titleBar, 12)
 
-    -- Fix bottom corners of titlebar
     local titleBarFix = Utilities.Create("Frame", {
         Name = "BottomFix",
         Position = UDim2.new(0, 0, 1, -12),
         Size = UDim2.new(1, 0, 0, 12),
         BackgroundColor3 = currentTheme.TitleBar,
+        BackgroundTransparency = getTransparency("TitleBar"),
         BorderSizePixel = 0,
         Parent = titleBar
     })
 
-    -- Title bar separator line
     local titleBarSep = Utilities.Create("Frame", {
         Name = "Separator",
         Position = UDim2.new(0, 0, 1, -1),
@@ -405,6 +502,19 @@ function VXClub:Window(config)
         BorderSizePixel = 0,
         Parent = titleBar
     })
+
+    -- Gradient accent line at top of title bar for gradient themes
+    local titleGradientLine
+    if currentAccentGrad then
+        titleGradientLine = Utilities.Create("Frame", {
+            Name = "GradientLine",
+            Size = UDim2.new(1, 0, 0, 2),
+            BackgroundColor3 = currentAccentGrad.Start,
+            BorderSizePixel = 0,
+            Parent = titleBar
+        })
+        Utilities.AddGradient(titleGradientLine, currentAccentGrad.Start, currentAccentGrad.End, 0)
+    end
 
     -- Traffic Light Buttons
     local trafficContainer = Utilities.Create("Frame", {
@@ -449,17 +559,13 @@ function VXClub:Window(config)
             Window:Unload()
         end)
     end
-
     if not disabled["Minimize"] then
         createTrafficButton("Minimize", currentTheme.TrafficMinimize, function()
             Window:Minimize()
         end)
     end
-
     if not disabled["Maximize"] then
-        createTrafficButton("Maximize", currentTheme.TrafficMaximize, function()
-            -- Toggle maximize (restore original size / fill screen)
-        end)
+        createTrafficButton("Maximize", currentTheme.TrafficMaximize, function() end)
     end
 
     -- Title Text
@@ -476,7 +582,6 @@ function VXClub:Window(config)
         Parent = titleBar
     })
 
-    -- Subtitle (right side)
     if windowConfig.Subtitle ~= "" then
         local subtitleLabel = Utilities.Create("TextLabel", {
             Name = "Subtitle",
@@ -491,6 +596,7 @@ function VXClub:Window(config)
             Parent = titleBar
         })
         titleLabel:Destroy()
+        titleLabel = subtitleLabel
     end
 
     -- Dragging
@@ -521,9 +627,9 @@ function VXClub:Window(config)
         end)
     end
 
-    -- ═══════════════════════════════════════
+    -- ================================================================
     -- BODY CONTAINER
-    -- ═══════════════════════════════════════
+    -- ================================================================
     local bodyFrame = Utilities.Create("Frame", {
         Name = "Body",
         Position = UDim2.new(0, 0, 0, 42),
@@ -532,14 +638,15 @@ function VXClub:Window(config)
         Parent = mainFrame
     })
 
-    -- ═══════════════════════════════════════
+    -- ================================================================
     -- SIDEBAR
-    -- ═══════════════════════════════════════
+    -- ================================================================
     local sidebarWidth = 180
     local sidebar = Utilities.Create("Frame", {
         Name = "Sidebar",
         Size = UDim2.new(0, sidebarWidth, 1, 0),
         BackgroundColor3 = currentTheme.SidebarBackground,
+        BackgroundTransparency = getTransparency("Sidebar"),
         BorderSizePixel = 0,
         Parent = bodyFrame
     })
@@ -555,31 +662,30 @@ function VXClub:Window(config)
     })
 
     -- User Info Panel
-    local userInfoFrame
+    local userInfoFrame, usernameLabel, handleLabel
     if windowConfig.ShowUserInfo then
         userInfoFrame = Utilities.Create("Frame", {
             Name = "UserInfo",
-            Size = UDim2.new(1, 0, 0, 60),
+            Size = UDim2.new(1, 0, 0, 70),
             BackgroundTransparency = 1,
             Parent = sidebar
         })
-        Utilities.AddPadding(userInfoFrame, 10, 14, 8, 14)
 
         local avatarFrame = Utilities.Create("ImageLabel", {
             Name = "Avatar",
             Size = UDim2.fromOffset(36, 36),
-            Position = UDim2.new(0, 14, 0.5, 0),
-            AnchorPoint = Vector2.new(0, 0.5),
+            Position = UDim2.new(0, 14, 0, 10),
+            AnchorPoint = Vector2.new(0, 0),
             BackgroundColor3 = currentTheme.ElementBackground,
             Image = "rbxthumb://type=AvatarHeadShot&id=" .. Player.UserId .. "&w=150&h=150",
             Parent = userInfoFrame
         })
         Utilities.AddCorner(avatarFrame, 9999)
 
-        local usernameLabel = Utilities.Create("TextLabel", {
+        usernameLabel = Utilities.Create("TextLabel", {
             Name = "Username",
-            Position = UDim2.new(0, 58, 0, 12),
-            Size = UDim2.new(1, -70, 0, 16),
+            Position = UDim2.new(0, 58, 0, 10),
+            Size = UDim2.new(1, -72, 0, 18),
             BackgroundTransparency = 1,
             Text = Player.DisplayName,
             TextColor3 = currentTheme.TextPrimary,
@@ -590,10 +696,10 @@ function VXClub:Window(config)
             Parent = userInfoFrame
         })
 
-        local handleLabel = Utilities.Create("TextLabel", {
+        handleLabel = Utilities.Create("TextLabel", {
             Name = "Handle",
             Position = UDim2.new(0, 58, 0, 30),
-            Size = UDim2.new(1, -70, 0, 14),
+            Size = UDim2.new(1, -72, 0, 16),
             BackgroundTransparency = 1,
             Text = "@" .. Player.Name,
             TextColor3 = currentTheme.TextMuted,
@@ -604,8 +710,7 @@ function VXClub:Window(config)
             Parent = userInfoFrame
         })
 
-        -- Divider under user info
-        Utilities.Create("Frame", {
+        local infoDivider = Utilities.Create("Frame", {
             Name = "InfoDivider",
             Position = UDim2.new(0.1, 0, 1, -1),
             Size = UDim2.new(0.8, 0, 0, 1),
@@ -614,13 +719,17 @@ function VXClub:Window(config)
             BorderSizePixel = 0,
             Parent = userInfoFrame
         })
+
+        registerElement(infoDivider, function(t)
+            infoDivider.BackgroundColor3 = t.DividerColor
+        end)
     end
 
-    -- Sidebar Tab Container (Scrolling)
+    -- Sidebar Tab Container
     local tabScrollFrame = Utilities.Create("ScrollingFrame", {
         Name = "TabScroll",
-        Position = UDim2.new(0, 0, 0, windowConfig.ShowUserInfo and 60 or 0),
-        Size = UDim2.new(1, 0, 1, windowConfig.ShowUserInfo and -60 or 0),
+        Position = UDim2.new(0, 0, 0, windowConfig.ShowUserInfo and 70 or 0),
+        Size = UDim2.new(1, 0, 1, windowConfig.ShowUserInfo and -70 or 0),
         BackgroundTransparency = 1,
         ScrollBarThickness = 2,
         ScrollBarImageColor3 = currentTheme.ScrollbarColor,
@@ -632,34 +741,36 @@ function VXClub:Window(config)
     Utilities.AddPadding(tabScrollFrame, 8, 10, 8, 10)
     Utilities.AddListLayout(tabScrollFrame, 2)
 
-    -- ═══════════════════════════════════════
+    -- ================================================================
     -- CONTENT AREA
-    -- ═══════════════════════════════════════
+    -- ================================================================
     local contentArea = Utilities.Create("Frame", {
         Name = "ContentArea",
         Position = UDim2.new(0, sidebarWidth, 0, 0),
         Size = UDim2.new(1, -sidebarWidth, 1, 0),
         BackgroundColor3 = currentTheme.ContentBackground,
+        BackgroundTransparency = getTransparency("Window"),
         BorderSizePixel = 0,
         Parent = bodyFrame
     })
 
-    -- ═══════════════════════════════════════
+    -- ================================================================
     -- NOTIFICATION CONTAINER
-    -- ═══════════════════════════════════════
+    -- ================================================================
     local notifContainer = Utilities.Create("Frame", {
         Name = "Notifications",
         AnchorPoint = Vector2.new(1, 1),
         Position = UDim2.new(1, -20, 1, -20),
         Size = UDim2.new(0, 320, 1, -40),
         BackgroundTransparency = 1,
+        ZIndex = 90,
         Parent = screenGui
     })
     Utilities.AddListLayout(notifContainer, 8, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Right, Enum.VerticalAlignment.Bottom)
 
-    -- ═══════════════════════════════════════
+    -- ================================================================
     -- DIALOG OVERLAY
-    -- ═══════════════════════════════════════
+    -- ================================================================
     local dialogOverlay = Utilities.Create("Frame", {
         Name = "DialogOverlay",
         Size = UDim2.new(1, 0, 1, 0),
@@ -670,9 +781,16 @@ function VXClub:Window(config)
         Parent = screenGui
     })
 
-    -- ═══════════════════════════════════════
-    -- WINDOW API METHODS
-    -- ═══════════════════════════════════════
+    -- ================================================================
+    -- FULL THEME UPDATE SYSTEM
+    -- ================================================================
+
+    local function applyAccentGradientToElement(element, gradStart, gradEnd, rotation)
+        Utilities.RemoveGradients(element)
+        if gradStart and gradEnd then
+            Utilities.AddGradient(element, gradStart, gradEnd, rotation or 0)
+        end
+    end
 
     function Window:SetTheme(themeName)
         local newTheme = Themes[themeName]
@@ -680,25 +798,74 @@ function VXClub:Window(config)
         currentTheme = newTheme
         Window.Theme = currentTheme
 
+        -- Update gradient
+        if currentTheme.IsGradientTheme then
+            currentAccentGrad = { Start = currentTheme.GradientStart, End = currentTheme.GradientEnd }
+        else
+            currentAccentGrad = nil
+        end
+        Window.Gradient = currentAccentGrad
+
         -- Update core elements
         mainFrame.BackgroundColor3 = currentTheme.WindowBackground
+        mainFrame.BackgroundTransparency = getTransparency("Window")
+        mainStroke.Color = currentTheme.SectionBorder
         titleBar.BackgroundColor3 = currentTheme.TitleBar
+        titleBar.BackgroundTransparency = getTransparency("TitleBar")
         titleBarFix.BackgroundColor3 = currentTheme.TitleBar
+        titleBarFix.BackgroundTransparency = getTransparency("TitleBar")
         titleBarSep.BackgroundColor3 = currentTheme.DividerColor
+        titleLabel.TextColor3 = currentTheme.TextPrimary
         sidebar.BackgroundColor3 = currentTheme.SidebarBackground
+        sidebar.BackgroundTransparency = getTransparency("Sidebar")
         sidebarSep.BackgroundColor3 = currentTheme.DividerColor
         contentArea.BackgroundColor3 = currentTheme.ContentBackground
+        contentArea.BackgroundTransparency = getTransparency("Window")
+        tabScrollFrame.ScrollBarImageColor3 = currentTheme.ScrollbarColor
 
-        -- Fire theme changed callbacks
+        -- Update title gradient line
+        if titleGradientLine then
+            titleGradientLine:Destroy()
+            titleGradientLine = nil
+        end
+        if currentAccentGrad then
+            titleGradientLine = Utilities.Create("Frame", {
+                Name = "GradientLine",
+                Size = UDim2.new(1, 0, 0, 2),
+                BackgroundColor3 = currentAccentGrad.Start,
+                BorderSizePixel = 0,
+                Parent = titleBar
+            })
+            Utilities.AddGradient(titleGradientLine, currentAccentGrad.Start, currentAccentGrad.End, 0)
+        end
+
+        -- Update user info
+        if usernameLabel then usernameLabel.TextColor3 = currentTheme.TextPrimary end
+        if handleLabel then handleLabel.TextColor3 = currentTheme.TextMuted end
+
+        -- Update all registered elements
+        for _, reg in ipairs(registeredElements) do
+            if reg.element and reg.element.Parent then
+                pcall(reg.update, currentTheme, currentAccentGrad)
+            end
+        end
+
+        -- Fire callbacks
         for _, cb in ipairs(Window.ThemeChangedCallbacks) do
             pcall(cb, currentTheme)
         end
     end
 
     function Window:SetAccentGradient(gradientName)
-        local grad = Gradients[gradientName]
-        if grad then
-            Window.Gradient = grad
+        -- If we have a gradient theme for it, just switch to that theme
+        if Themes[gradientName] then
+            Window:SetTheme(gradientName)
+        else
+            local grad = Gradients[gradientName]
+            if grad then
+                currentAccentGrad = grad
+                Window.Gradient = grad
+            end
         end
     end
 
@@ -706,49 +873,88 @@ function VXClub:Window(config)
         return currentTheme
     end
 
-    function Window:Notify(config)
+    function Window:GetAccentGradient()
+        return currentAccentGrad
+    end
+
+    -- ================================================================
+    -- LIQUID GLASS TOGGLE
+    -- ================================================================
+    function Window:SetLiquidGlass(state)
+        liquidGlassEnabled = state
+        Window.LiquidGlassEnabled = state
+
+        -- Update blur
+        if blurEffect then
+            blurEffect.Size = state and 20 or 12
+            blurEffect.Enabled = state or Window.AcrylicBlurEnabled
+        elseif state then
+            blurEffect = Utilities.Create("BlurEffect", {
+                Name = "VXClubBlur",
+                Size = 20,
+                Parent = Lighting
+            })
+        end
+
+        -- Re-apply theme to update all transparencies
+        Window:SetTheme(currentTheme.Name)
+    end
+
+    function Window:GetLiquidGlass()
+        return liquidGlassEnabled
+    end
+
+    -- ================================================================
+    -- NOTIFICATIONS
+    -- ================================================================
+    function Window:Notify(notifConfig)
         if not Window.NotificationsEnabled then return end
-        config = config or {}
-        local title = config.Title or "Notification"
-        local desc = config.Description or ""
-        local lifetime = config.Lifetime or 5
-        local gradientName = config.Gradient or nil
+        notifConfig = notifConfig or {}
+        local title = notifConfig.Title or "Notification"
+        local desc = notifConfig.Description or ""
+        local lifetime = notifConfig.Lifetime or 5
+        local gradientName = notifConfig.Gradient or nil
 
         local notifFrame = Utilities.Create("Frame", {
             Name = "Notification",
             Size = UDim2.new(1, 0, 0, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundColor3 = currentTheme.NotificationBackground,
+            BackgroundTransparency = getTransparency("Notification"),
             ClipsDescendants = true,
+            ZIndex = 91,
             Parent = notifContainer
         })
         Utilities.AddCorner(notifFrame, 10)
         Utilities.AddStroke(notifFrame, currentTheme.NotificationBorder, 1, 0.3)
-        Utilities.AddPadding(notifFrame, 12, 14, 12, 14)
 
         -- Accent bar on left
         local accentBar = Utilities.Create("Frame", {
             Name = "Accent",
             Position = UDim2.new(0, 0, 0, 0),
-            Size = UDim2.new(0, 3, 1, 0),
+            Size = UDim2.new(0, 4, 1, 0),
             BorderSizePixel = 0,
+            ZIndex = 92,
             Parent = notifFrame
         })
+        Utilities.AddCorner(accentBar, 2)
         if gradientName and Gradients[gradientName] then
             accentBar.BackgroundColor3 = Gradients[gradientName].Start
             Utilities.AddGradient(accentBar, Gradients[gradientName].Start, Gradients[gradientName].End, 90)
-        elseif accentGrad then
-            accentBar.BackgroundColor3 = accentGrad.Start
-            Utilities.AddGradient(accentBar, accentGrad.Start, accentGrad.End, 90)
+        elseif currentAccentGrad then
+            accentBar.BackgroundColor3 = currentAccentGrad.Start
+            Utilities.AddGradient(accentBar, currentAccentGrad.Start, currentAccentGrad.End, 90)
         else
             accentBar.BackgroundColor3 = currentTheme.Accent
         end
 
         local notifLayout = Utilities.Create("Frame", {
             Name = "Content",
-            Size = UDim2.new(1, 0, 0, 0),
+            Position = UDim2.new(0, 16, 0, 12),
+            Size = UDim2.new(1, -28, 0, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
+            ZIndex = 91,
             Parent = notifFrame
         })
         Utilities.AddListLayout(notifLayout, 4)
@@ -762,6 +968,7 @@ function VXClub:Window(config)
             TextSize = 13,
             Font = Enum.Font.GothamBold,
             TextXAlignment = Enum.TextXAlignment.Left,
+            ZIndex = 91,
             Parent = notifLayout
         })
 
@@ -777,15 +984,21 @@ function VXClub:Window(config)
                 Font = Enum.Font.Gotham,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 TextWrapped = true,
+                ZIndex = 91,
                 Parent = notifLayout
             })
         end
 
-        -- Animate in
-        notifFrame.BackgroundTransparency = 1
-        Utilities.Tween(notifFrame, smoothTween, { BackgroundTransparency = 0 })
+        Utilities.Create("Frame", {
+            Name = "BottomPad",
+            Size = UDim2.new(1, 0, 0, 12),
+            BackgroundTransparency = 1,
+            Parent = notifLayout
+        })
 
-        -- Auto-dismiss
+        notifFrame.BackgroundTransparency = 1
+        Utilities.Tween(notifFrame, smoothTween, { BackgroundTransparency = getTransparency("Notification") })
+
         task.delay(lifetime, function()
             if notifFrame and notifFrame.Parent then
                 Utilities.Tween(notifFrame, smoothTween, { BackgroundTransparency = 1 }).Completed:Connect(function()
@@ -795,8 +1008,11 @@ function VXClub:Window(config)
         end)
     end
 
-    function Window:Dialog(config)
-        config = config or {}
+    -- ================================================================
+    -- DIALOG
+    -- ================================================================
+    function Window:Dialog(dialogConfig)
+        dialogConfig = dialogConfig or {}
         dialogOverlay.Visible = true
         Utilities.Tween(dialogOverlay, smoothTween, { BackgroundTransparency = currentTheme.DialogOverlayTransparency })
 
@@ -807,25 +1023,26 @@ function VXClub:Window(config)
             Size = UDim2.fromOffset(380, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundColor3 = currentTheme.DialogBackground,
+            BackgroundTransparency = getTransparency("Dialog"),
             ZIndex = 101,
             Parent = dialogOverlay
         })
         Utilities.AddCorner(dialogFrame, 14)
         Utilities.AddStroke(dialogFrame, currentTheme.SectionBorder, 1, 0.3)
         Utilities.AddPadding(dialogFrame, 24, 24, 20, 24)
-
-        local dialogLayout = Utilities.AddListLayout(dialogFrame, 12)
+        Utilities.AddListLayout(dialogFrame, 12)
 
         Utilities.Create("TextLabel", {
             Name = "Title",
             Size = UDim2.new(1, 0, 0, 20),
             BackgroundTransparency = 1,
-            Text = config.Title or "Dialog",
+            Text = dialogConfig.Title or "Dialog",
             TextColor3 = currentTheme.TextPrimary,
             TextSize = 16,
             Font = Enum.Font.GothamBold,
             TextXAlignment = Enum.TextXAlignment.Center,
             LayoutOrder = 1,
+            ZIndex = 102,
             Parent = dialogFrame
         })
 
@@ -834,13 +1051,14 @@ function VXClub:Window(config)
             Size = UDim2.new(1, 0, 0, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
-            Text = config.Description or "",
+            Text = dialogConfig.Description or "",
             TextColor3 = currentTheme.TextSecondary,
             TextSize = 13,
             Font = Enum.Font.Gotham,
             TextXAlignment = Enum.TextXAlignment.Center,
             TextWrapped = true,
             LayoutOrder = 2,
+            ZIndex = 102,
             Parent = dialogFrame
         })
 
@@ -849,6 +1067,7 @@ function VXClub:Window(config)
             Size = UDim2.new(1, 0, 0, 36),
             BackgroundTransparency = 1,
             LayoutOrder = 3,
+            ZIndex = 102,
             Parent = dialogFrame
         })
         Utilities.AddListLayout(buttonContainer, 10, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center)
@@ -860,7 +1079,7 @@ function VXClub:Window(config)
             end)
         end
 
-        for i, btnConfig in ipairs(config.Buttons or {}) do
+        for i, btnConfig in ipairs(dialogConfig.Buttons or {}) do
             local isPrimary = (i == 1)
             local btn = Utilities.Create("TextButton", {
                 Name = btnConfig.Name or "Button",
@@ -871,21 +1090,19 @@ function VXClub:Window(config)
                 TextSize = 13,
                 Font = Enum.Font.GothamMedium,
                 AutoButtonColor = false,
+                ZIndex = 103,
                 Parent = buttonContainer
             })
             Utilities.AddCorner(btn, 8)
 
-            if isPrimary and accentGrad then
-                Utilities.AddGradient(btn, accentGrad.Start, accentGrad.End, 45)
+            if isPrimary and currentAccentGrad then
+                Utilities.AddGradient(btn, currentAccentGrad.Start, currentAccentGrad.End, 45)
             end
 
             btn.MouseButton1Click:Connect(function()
-                if btnConfig.Callback then
-                    pcall(btnConfig.Callback)
-                end
+                if btnConfig.Callback then pcall(btnConfig.Callback) end
                 closeDialog()
             end)
-
             btn.MouseEnter:Connect(function()
                 Utilities.Tween(btn, fastTween, {
                     BackgroundColor3 = isPrimary and currentTheme.AccentHover or currentTheme.ElementBackgroundHover
@@ -899,6 +1116,9 @@ function VXClub:Window(config)
         end
     end
 
+    -- ================================================================
+    -- WINDOW CONTROLS
+    -- ================================================================
     function Window:Minimize()
         Window.IsMinimized = not Window.IsMinimized
         if Window.IsMinimized then
@@ -945,7 +1165,7 @@ function VXClub:Window(config)
 
     function Window:SetAcrylicBlurState(state)
         Window.AcrylicBlurEnabled = state
-        if blurEffect then blurEffect.Enabled = state end
+        if blurEffect then blurEffect.Enabled = state or liquidGlassEnabled end
     end
 
     function Window:GetAcrylicBlurState()
@@ -964,8 +1184,8 @@ function VXClub:Window(config)
         Window.ShowUserInfoEnabled = state
         if userInfoFrame then
             userInfoFrame.Visible = state
-            tabScrollFrame.Position = UDim2.new(0, 0, 0, state and 60 or 0)
-            tabScrollFrame.Size = UDim2.new(1, 0, 1, state and -60 or 0)
+            tabScrollFrame.Position = UDim2.new(0, 0, 0, state and 70 or 0)
+            tabScrollFrame.Size = UDim2.new(1, 0, 1, state and -70 or 0)
         end
     end
 
@@ -981,35 +1201,32 @@ function VXClub:Window(config)
         end
     end)
 
-    -- ═══════════════════════════════════════
+    -- ================================================================
     -- GLOBAL SETTINGS
-    -- ═══════════════════════════════════════
-    function Window:GlobalSetting(config)
-        config = config or {}
+    -- ================================================================
+    function Window:GlobalSetting(gsConfig)
+        gsConfig = gsConfig or {}
         local setting = {
-            Name = config.Name or "Setting",
-            Value = config.Default ~= nil and config.Default or false,
-            Callback = config.Callback or function() end,
+            Name = gsConfig.Name or "Setting",
+            Value = gsConfig.Default ~= nil and gsConfig.Default or false,
+            Callback = gsConfig.Callback or function() end,
         }
-
         function setting:Set(value)
             setting.Value = value
             pcall(setting.Callback, value)
         end
-
         table.insert(Window.GlobalSettings, setting)
         return setting
     end
 
-    -- ═══════════════════════════════════════
+    -- ================================================================
     -- TAB GROUP
-    -- ═══════════════════════════════════════
+    -- ================================================================
     function Window:TabGroup()
         local tabGroup = {
             Tabs = {},
         }
 
-        -- Tab Group Header (optional separator in sidebar)
         local groupSep = Utilities.Create("Frame", {
             Name = "TabGroupSeparator",
             Size = UDim2.new(1, 0, 0, 1),
@@ -1019,12 +1236,15 @@ function VXClub:Window(config)
             Visible = #Window.TabGroups > 0,
             Parent = tabScrollFrame
         })
+        registerElement(groupSep, function(t)
+            groupSep.BackgroundColor3 = t.DividerColor
+        end)
 
-        function tabGroup:Tab(config)
-            config = config or {}
+        function tabGroup:Tab(tabConfig)
+            tabConfig = tabConfig or {}
             local tab = {
-                Name = config.Name or "Tab",
-                Image = config.Image or nil,
+                Name = tabConfig.Name or "Tab",
+                Image = tabConfig.Image or nil,
                 Sections = {},
                 IsSelected = false,
                 ContentFrame = nil,
@@ -1032,7 +1252,7 @@ function VXClub:Window(config)
 
             -- Sidebar Tab Button
             local tabBtn = Utilities.Create("TextButton", {
-                Name = "Tab_" .. config.Name,
+                Name = "Tab_" .. tabConfig.Name,
                 Size = UDim2.new(1, 0, 0, 34),
                 BackgroundColor3 = currentTheme.SidebarBackground,
                 BackgroundTransparency = 1,
@@ -1042,33 +1262,32 @@ function VXClub:Window(config)
             })
             Utilities.AddCorner(tabBtn, 7)
 
-            local tabInner = Utilities.Create("Frame", {
-                Name = "Inner",
-                Size = UDim2.new(1, 0, 1, 0),
-                BackgroundTransparency = 1,
-                Parent = tabBtn
-            })
-            Utilities.AddPadding(tabInner, 0, 10, 0, 10)
-
-            if config.Image then
-                Utilities.Create("ImageLabel", {
+            if tabConfig.Image then
+                local tabIcon = Utilities.Create("ImageLabel", {
                     Name = "Icon",
                     Position = UDim2.new(0, 10, 0.5, 0),
                     AnchorPoint = Vector2.new(0, 0.5),
                     Size = UDim2.fromOffset(16, 16),
                     BackgroundTransparency = 1,
-                    Image = config.Image,
+                    Image = tabConfig.Image,
                     ImageColor3 = currentTheme.TextSecondary,
                     Parent = tabBtn
                 })
+                registerElement(tabIcon, function(t)
+                    if not tab.IsSelected then
+                        tabIcon.ImageColor3 = t.TextSecondary
+                    else
+                        tabIcon.ImageColor3 = t.TextPrimary
+                    end
+                end)
             end
 
             local tabLabel = Utilities.Create("TextLabel", {
                 Name = "Label",
-                Position = UDim2.new(0, config.Image and 34 or 10, 0, 0),
-                Size = UDim2.new(1, config.Image and -44 or -20, 1, 0),
+                Position = UDim2.new(0, tabConfig.Image and 34 or 10, 0, 0),
+                Size = UDim2.new(1, tabConfig.Image and -44 or -20, 1, 0),
                 BackgroundTransparency = 1,
-                Text = config.Name,
+                Text = tabConfig.Name,
                 TextColor3 = currentTheme.TextSecondary,
                 TextSize = 13,
                 Font = Enum.Font.GothamMedium,
@@ -1087,13 +1306,27 @@ function VXClub:Window(config)
                 Parent = tabBtn
             })
             Utilities.AddCorner(indicator, 2)
-            if accentGrad then
-                Utilities.AddGradient(indicator, accentGrad.Start, accentGrad.End, 90)
-            end
+
+            registerElement(indicator, function(t, grad)
+                indicator.BackgroundColor3 = t.Accent
+                Utilities.RemoveGradients(indicator)
+                if grad then
+                    Utilities.AddGradient(indicator, grad.Start, grad.End, 90)
+                end
+            end)
+
+            registerElement(tabBtn, function(t)
+                if tab.IsSelected then
+                    tabBtn.BackgroundColor3 = t.SidebarTabActive
+                    tabLabel.TextColor3 = t.TextPrimary
+                else
+                    tabLabel.TextColor3 = t.TextSecondary
+                end
+            end)
 
             -- Content Frame for this tab
             local contentFrame = Utilities.Create("ScrollingFrame", {
-                Name = "Content_" .. config.Name,
+                Name = "Content_" .. tabConfig.Name,
                 Size = UDim2.new(1, 0, 1, 0),
                 BackgroundTransparency = 1,
                 ScrollBarThickness = 3,
@@ -1106,7 +1339,11 @@ function VXClub:Window(config)
             })
             Utilities.AddPadding(contentFrame, 16, 20, 16, 20)
 
-            -- Two-column layout support
+            registerElement(contentFrame, function(t)
+                contentFrame.ScrollBarImageColor3 = t.ScrollbarColor
+            end)
+
+            -- Two-column layout
             local leftColumn = Utilities.Create("Frame", {
                 Name = "LeftColumn",
                 Size = UDim2.new(0.5, -6, 0, 0),
@@ -1130,7 +1367,6 @@ function VXClub:Window(config)
 
             -- Select / Deselect
             function tab:Select()
-                -- Deselect all other tabs
                 for _, otherTab in ipairs(tabGroup.Tabs) do
                     if otherTab ~= tab then
                         otherTab:Deselect()
@@ -1171,12 +1407,12 @@ function VXClub:Window(config)
                 tab:Select()
             end)
 
-            -- ═══════════════════════════════════════
+            -- ================================================================
             -- SECTION
-            -- ═══════════════════════════════════════
-            function tab:Section(config)
-                config = config or {}
-                local side = config.Side or "Left"
+            -- ================================================================
+            function tab:Section(sectionConfig)
+                sectionConfig = sectionConfig or {}
+                local side = sectionConfig.Side or "Left"
                 local parentColumn = (side == "Right") and rightColumn or leftColumn
 
                 local section = {}
@@ -1186,71 +1422,83 @@ function VXClub:Window(config)
                     Size = UDim2.new(1, 0, 0, 0),
                     AutomaticSize = Enum.AutomaticSize.Y,
                     BackgroundColor3 = currentTheme.SectionBackground,
+                    BackgroundTransparency = getTransparency("Section"),
                     Parent = parentColumn
                 })
                 Utilities.AddCorner(sectionFrame, 10)
-                Utilities.AddStroke(sectionFrame, currentTheme.SectionBorder, 1, 0.5)
+                local secStroke = Utilities.AddStroke(sectionFrame, currentTheme.SectionBorder, 1, 0.5)
                 Utilities.AddPadding(sectionFrame, 14, 14, 14, 14)
+                Utilities.AddListLayout(sectionFrame, 8)
 
-                local sectionLayout = Utilities.AddListLayout(sectionFrame, 8)
+                registerElement(sectionFrame, function(t)
+                    sectionFrame.BackgroundColor3 = t.SectionBackground
+                    sectionFrame.BackgroundTransparency = getTransparency("Section")
+                    secStroke.Color = t.SectionBorder
+                end)
 
-                -- ═══════════════════════════════════════
-                -- HEADER
-                -- ═══════════════════════════════════════
-                function section:Header(config)
-                    config = config or {}
+                -- ========== HEADER ==========
+                function section:Header(headerConfig)
+                    headerConfig = headerConfig or {}
                     local headerLabel = Utilities.Create("TextLabel", {
                         Name = "Header",
                         Size = UDim2.new(1, 0, 0, 22),
                         BackgroundTransparency = 1,
-                        Text = config.Name or config.Text or "Header",
+                        Text = headerConfig.Name or headerConfig.Text or "Header",
                         TextColor3 = currentTheme.TextPrimary,
                         TextSize = 15,
                         Font = Enum.Font.GothamBold,
                         TextXAlignment = Enum.TextXAlignment.Left,
                         Parent = sectionFrame
                     })
+                    registerElement(headerLabel, function(t)
+                        headerLabel.TextColor3 = t.TextPrimary
+                    end)
 
-                    -- Optional gradient underline
-                    if accentGrad then
-                        local underline = Utilities.Create("Frame", {
-                            Name = "Underline",
-                            Size = UDim2.new(0.3, 0, 0, 2),
-                            BackgroundColor3 = accentGrad.Start,
-                            BorderSizePixel = 0,
-                            LayoutOrder = -1,
-                            Parent = sectionFrame
-                        })
-                        Utilities.AddCorner(underline, 1)
-                        Utilities.AddGradient(underline, accentGrad.Start, accentGrad.End, 0)
+                    -- Gradient underline
+                    local underline = Utilities.Create("Frame", {
+                        Name = "Underline",
+                        Size = UDim2.new(0.3, 0, 0, 2),
+                        BackgroundColor3 = currentTheme.Accent,
+                        BorderSizePixel = 0,
+                        Parent = sectionFrame
+                    })
+                    Utilities.AddCorner(underline, 1)
+                    if currentAccentGrad then
+                        Utilities.AddGradient(underline, currentAccentGrad.Start, currentAccentGrad.End, 0)
                     end
+                    registerElement(underline, function(t, grad)
+                        underline.BackgroundColor3 = t.Accent
+                        Utilities.RemoveGradients(underline)
+                        if grad then
+                            Utilities.AddGradient(underline, grad.Start, grad.End, 0)
+                        end
+                    end)
 
                     return headerLabel
                 end
 
-                -- ═══════════════════════════════════════
-                -- BUTTON
-                -- ═══════════════════════════════════════
-                function section:Button(config)
-                    config = config or {}
+                -- ========== BUTTON ==========
+                function section:Button(btnConfig)
+                    btnConfig = btnConfig or {}
                     local btnFrame = Utilities.Create("TextButton", {
-                        Name = "Button_" .. (config.Name or "Btn"),
+                        Name = "Button_" .. (btnConfig.Name or "Btn"),
                         Size = UDim2.new(1, 0, 0, 36),
                         BackgroundColor3 = currentTheme.ElementBackground,
+                        BackgroundTransparency = getTransparency("Element"),
                         Text = "",
                         AutoButtonColor = false,
                         ClipsDescendants = true,
                         Parent = sectionFrame
                     })
                     Utilities.AddCorner(btnFrame, 8)
-                    Utilities.AddStroke(btnFrame, currentTheme.ElementBorder, 1, 0.6)
+                    local btnStroke = Utilities.AddStroke(btnFrame, currentTheme.ElementBorder, 1, 0.6)
 
                     local btnLabel = Utilities.Create("TextLabel", {
                         Name = "Label",
                         Size = UDim2.new(1, -16, 1, 0),
                         Position = UDim2.new(0, 8, 0, 0),
                         BackgroundTransparency = 1,
-                        Text = config.Name or "Button",
+                        Text = btnConfig.Name or "Button",
                         TextColor3 = currentTheme.TextPrimary,
                         TextSize = 13,
                         Font = Enum.Font.GothamMedium,
@@ -1258,50 +1506,71 @@ function VXClub:Window(config)
                         Parent = btnFrame
                     })
 
-                    -- Gradient accent for primary buttons
-                    if config.Primary and accentGrad then
-                        Utilities.AddGradient(btnFrame, accentGrad.Start, accentGrad.End, 45)
+                    if btnConfig.Primary then
+                        btnFrame.BackgroundColor3 = currentTheme.Accent
+                        btnFrame.BackgroundTransparency = 0
                         btnLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        if currentAccentGrad then
+                            Utilities.AddGradient(btnFrame, currentAccentGrad.Start, currentAccentGrad.End, 45)
+                        end
                     end
 
+                    registerElement(btnFrame, function(t, grad)
+                        btnStroke.Color = t.ElementBorder
+                        if btnConfig.Primary then
+                            btnFrame.BackgroundColor3 = t.Accent
+                            btnFrame.BackgroundTransparency = 0
+                            btnLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                            Utilities.RemoveGradients(btnFrame)
+                            if grad then
+                                Utilities.AddGradient(btnFrame, grad.Start, grad.End, 45)
+                            end
+                        else
+                            btnFrame.BackgroundColor3 = t.ElementBackground
+                            btnFrame.BackgroundTransparency = getTransparency("Element")
+                            btnLabel.TextColor3 = t.TextPrimary
+                        end
+                    end)
+
                     btnFrame.MouseEnter:Connect(function()
-                        Utilities.Tween(btnFrame, fastTween, { BackgroundColor3 = currentTheme.ElementBackgroundHover })
+                        if not btnConfig.Primary then
+                            Utilities.Tween(btnFrame, fastTween, { BackgroundColor3 = currentTheme.ElementBackgroundHover })
+                        end
                     end)
                     btnFrame.MouseLeave:Connect(function()
-                        Utilities.Tween(btnFrame, fastTween, { BackgroundColor3 = currentTheme.ElementBackground })
+                        if not btnConfig.Primary then
+                            Utilities.Tween(btnFrame, fastTween, { BackgroundColor3 = currentTheme.ElementBackground })
+                        end
                     end)
                     btnFrame.MouseButton1Click:Connect(function()
                         Utilities.MakeRipple(btnFrame, Vector2.new(Mouse.X, Mouse.Y), currentTheme.Accent)
-                        if config.Callback then
-                            pcall(config.Callback)
-                        end
+                        if btnConfig.Callback then pcall(btnConfig.Callback) end
                     end)
 
                     return btnFrame
                 end
 
-                -- ═══════════════════════════════════════
-                -- TOGGLE
-                -- ═══════════════════════════════════════
-                function section:Toggle(config, flag)
-                    config = config or {}
-                    local toggled = config.Default or false
+                -- ========== TOGGLE ==========
+                function section:Toggle(toggleConfig, flag)
+                    toggleConfig = toggleConfig or {}
+                    local toggled = toggleConfig.Default or false
 
                     local toggleFrame = Utilities.Create("Frame", {
-                        Name = "Toggle_" .. (config.Name or "Toggle"),
+                        Name = "Toggle_" .. (toggleConfig.Name or "Toggle"),
                         Size = UDim2.new(1, 0, 0, 36),
                         BackgroundColor3 = currentTheme.ElementBackground,
+                        BackgroundTransparency = getTransparency("Element"),
                         Parent = sectionFrame
                     })
                     Utilities.AddCorner(toggleFrame, 8)
-                    Utilities.AddStroke(toggleFrame, currentTheme.ElementBorder, 1, 0.6)
+                    local tglStroke = Utilities.AddStroke(toggleFrame, currentTheme.ElementBorder, 1, 0.6)
 
-                    Utilities.Create("TextLabel", {
+                    local tglLabel = Utilities.Create("TextLabel", {
                         Name = "Label",
                         Position = UDim2.new(0, 12, 0, 0),
                         Size = UDim2.new(1, -60, 1, 0),
                         BackgroundTransparency = 1,
-                        Text = config.Name or "Toggle",
+                        Text = toggleConfig.Name or "Toggle",
                         TextColor3 = currentTheme.TextPrimary,
                         TextSize = 13,
                         Font = Enum.Font.GothamMedium,
@@ -1319,10 +1588,9 @@ function VXClub:Window(config)
                     })
                     Utilities.AddCorner(toggleSwitch, 11)
 
-                    -- Gradient on toggle
                     local toggleGrad
-                    if accentGrad and toggled then
-                        toggleGrad = Utilities.AddGradient(toggleSwitch, accentGrad.Start, accentGrad.End, 0)
+                    if currentAccentGrad and toggled then
+                        toggleGrad = Utilities.AddGradient(toggleSwitch, currentAccentGrad.Start, currentAccentGrad.End, 0)
                     end
 
                     local toggleKnob = Utilities.Create("Frame", {
@@ -1349,8 +1617,8 @@ function VXClub:Window(config)
                         if toggled then
                             Utilities.Tween(toggleSwitch, smoothTween, { BackgroundColor3 = currentTheme.ToggleOn })
                             Utilities.Tween(toggleKnob, springTween, { Position = UDim2.new(1, -20, 0.5, 0) })
-                            if accentGrad and not toggleGrad then
-                                toggleGrad = Utilities.AddGradient(toggleSwitch, accentGrad.Start, accentGrad.End, 0)
+                            if currentAccentGrad and not toggleGrad then
+                                toggleGrad = Utilities.AddGradient(toggleSwitch, currentAccentGrad.Start, currentAccentGrad.End, 0)
                             end
                         else
                             Utilities.Tween(toggleSwitch, smoothTween, { BackgroundColor3 = currentTheme.ToggleOff })
@@ -1365,17 +1633,32 @@ function VXClub:Window(config)
                     toggleBtn.MouseButton1Click:Connect(function()
                         toggled = not toggled
                         updateVisual()
-                        if config.Callback then
-                            pcall(config.Callback, toggled)
+                        if toggleConfig.Callback then pcall(toggleConfig.Callback, toggled) end
+                    end)
+
+                    registerElement(toggleFrame, function(t, grad)
+                        toggleFrame.BackgroundColor3 = t.ElementBackground
+                        toggleFrame.BackgroundTransparency = getTransparency("Element")
+                        tglStroke.Color = t.ElementBorder
+                        tglLabel.TextColor3 = t.TextPrimary
+                        -- Re-apply toggle gradient
+                        if toggled then
+                            toggleSwitch.BackgroundColor3 = t.ToggleOn
+                            if toggleGrad then toggleGrad:Destroy() end
+                            toggleGrad = nil
+                            if grad then
+                                toggleGrad = Utilities.AddGradient(toggleSwitch, grad.Start, grad.End, 0)
+                            end
+                        else
+                            toggleSwitch.BackgroundColor3 = t.ToggleOff
+                            if toggleGrad then toggleGrad:Destroy() toggleGrad = nil end
                         end
                     end)
 
                     function toggle:Set(value)
                         toggled = value
                         updateVisual()
-                        if config.Callback then
-                            pcall(config.Callback, toggled)
-                        end
+                        if toggleConfig.Callback then pcall(toggleConfig.Callback, toggled) end
                     end
 
                     function toggle:Get()
@@ -1385,25 +1668,24 @@ function VXClub:Window(config)
                     return toggle
                 end
 
-                -- ═══════════════════════════════════════
-                -- SLIDER
-                -- ═══════════════════════════════════════
-                function section:Slider(config, flag)
-                    config = config or {}
-                    local min = config.Minimum or 0
-                    local max = config.Maximum or 100
-                    local default = config.Default or min
-                    local precision = config.Precision or 0
-                    local display = config.DisplayMethod or "Value"
+                -- ========== SLIDER ==========
+                function section:Slider(sliderConfig, flag)
+                    sliderConfig = sliderConfig or {}
+                    local min = sliderConfig.Minimum or 0
+                    local max = sliderConfig.Maximum or 100
+                    local default = sliderConfig.Default or min
+                    local precision = sliderConfig.Precision or 0
+                    local display = sliderConfig.DisplayMethod or "Value"
 
                     local sliderFrame = Utilities.Create("Frame", {
-                        Name = "Slider_" .. (config.Name or "Slider"),
+                        Name = "Slider_" .. (sliderConfig.Name or "Slider"),
                         Size = UDim2.new(1, 0, 0, 52),
                         BackgroundColor3 = currentTheme.ElementBackground,
+                        BackgroundTransparency = getTransparency("Element"),
                         Parent = sectionFrame
                     })
                     Utilities.AddCorner(sliderFrame, 8)
-                    Utilities.AddStroke(sliderFrame, currentTheme.ElementBorder, 1, 0.6)
+                    local slrStroke = Utilities.AddStroke(sliderFrame, currentTheme.ElementBorder, 1, 0.6)
 
                     local topRow = Utilities.Create("Frame", {
                         Name = "TopRow",
@@ -1413,11 +1695,11 @@ function VXClub:Window(config)
                         Parent = sliderFrame
                     })
 
-                    Utilities.Create("TextLabel", {
+                    local slrLabel = Utilities.Create("TextLabel", {
                         Name = "Label",
                         Size = UDim2.new(0.6, 0, 1, 0),
                         BackgroundTransparency = 1,
-                        Text = config.Name or "Slider",
+                        Text = sliderConfig.Name or "Slider",
                         TextColor3 = currentTheme.TextPrimary,
                         TextSize = 13,
                         Font = Enum.Font.GothamMedium,
@@ -1454,8 +1736,8 @@ function VXClub:Window(config)
                         Parent = trackFrame
                     })
                     Utilities.AddCorner(fillFrame, 3)
-                    if accentGrad then
-                        Utilities.AddGradient(fillFrame, accentGrad.Start, accentGrad.End, 0)
+                    if currentAccentGrad then
+                        Utilities.AddGradient(fillFrame, currentAccentGrad.Start, currentAccentGrad.End, 0)
                     end
 
                     local knob = Utilities.Create("Frame", {
@@ -1468,7 +1750,22 @@ function VXClub:Window(config)
                         Parent = trackFrame
                     })
                     Utilities.AddCorner(knob, 9999)
-                    Utilities.AddStroke(knob, currentTheme.ElementBorder, 1, 0.5)
+                    local knobStroke = Utilities.AddStroke(knob, currentTheme.ElementBorder, 1, 0.5)
+
+                    registerElement(sliderFrame, function(t, grad)
+                        sliderFrame.BackgroundColor3 = t.ElementBackground
+                        sliderFrame.BackgroundTransparency = getTransparency("Element")
+                        slrStroke.Color = t.ElementBorder
+                        slrLabel.TextColor3 = t.TextPrimary
+                        valueLabel.TextColor3 = t.TextSecondary
+                        trackFrame.BackgroundColor3 = t.SliderTrack
+                        fillFrame.BackgroundColor3 = t.SliderFill
+                        knobStroke.Color = t.ElementBorder
+                        Utilities.RemoveGradients(fillFrame)
+                        if grad then
+                            Utilities.AddGradient(fillFrame, grad.Start, grad.End, 0)
+                        end
+                    end)
 
                     local slider = {}
                     local currentValue = default
@@ -1520,9 +1817,7 @@ function VXClub:Window(config)
                         if input.UserInputType == Enum.UserInputType.MouseButton1 then
                             if sliding then
                                 sliding = false
-                                if config.Callback then
-                                    pcall(config.Callback, currentValue)
-                                end
+                                if sliderConfig.Callback then pcall(sliderConfig.Callback, currentValue) end
                             end
                         end
                     end)
@@ -1541,7 +1836,6 @@ function VXClub:Window(config)
                     function slider:Set(value)
                         updateSlider(value)
                     end
-
                     function slider:Get()
                         return currentValue
                     end
@@ -1549,27 +1843,26 @@ function VXClub:Window(config)
                     return slider
                 end
 
-                -- ═══════════════════════════════════════
-                -- INPUT
-                -- ═══════════════════════════════════════
-                function section:Input(config, flag)
-                    config = config or {}
+                -- ========== INPUT ==========
+                function section:Input(inputConfig, flag)
+                    inputConfig = inputConfig or {}
 
                     local inputFrame = Utilities.Create("Frame", {
-                        Name = "Input_" .. (config.Name or "Input"),
+                        Name = "Input_" .. (inputConfig.Name or "Input"),
                         Size = UDim2.new(1, 0, 0, 60),
                         BackgroundColor3 = currentTheme.ElementBackground,
+                        BackgroundTransparency = getTransparency("Element"),
                         Parent = sectionFrame
                     })
                     Utilities.AddCorner(inputFrame, 8)
-                    Utilities.AddStroke(inputFrame, currentTheme.ElementBorder, 1, 0.6)
+                    local inpStroke = Utilities.AddStroke(inputFrame, currentTheme.ElementBorder, 1, 0.6)
                     Utilities.AddPadding(inputFrame, 8, 12, 8, 12)
 
-                    Utilities.Create("TextLabel", {
+                    local inpLabel = Utilities.Create("TextLabel", {
                         Name = "Label",
                         Size = UDim2.new(1, 0, 0, 16),
                         BackgroundTransparency = 1,
-                        Text = config.Name or "Input",
+                        Text = inputConfig.Name or "Input",
                         TextColor3 = currentTheme.TextPrimary,
                         TextSize = 13,
                         Font = Enum.Font.GothamMedium,
@@ -1582,8 +1875,9 @@ function VXClub:Window(config)
                         Position = UDim2.new(0, 12, 0, 30),
                         Size = UDim2.new(1, -24, 0, 24),
                         BackgroundColor3 = currentTheme.InputBackground,
+                        BackgroundTransparency = getTransparency("Input"),
                         Text = "",
-                        PlaceholderText = config.Placeholder or "Type here...",
+                        PlaceholderText = inputConfig.Placeholder or "Type here...",
                         PlaceholderColor3 = currentTheme.TextMuted,
                         TextColor3 = currentTheme.TextPrimary,
                         TextSize = 13,
@@ -1593,69 +1887,68 @@ function VXClub:Window(config)
                         Parent = inputFrame
                     })
                     Utilities.AddCorner(textBox, 6)
-                    Utilities.AddStroke(textBox, currentTheme.InputBorder, 1, 0.3)
+                    local tbStroke = Utilities.AddStroke(textBox, currentTheme.InputBorder, 1, 0.3)
                     Utilities.AddPadding(textBox, 0, 8, 0, 8)
 
-                    local inputStroke = textBox:FindFirstChildOfClass("UIStroke")
+                    registerElement(inputFrame, function(t)
+                        inputFrame.BackgroundColor3 = t.ElementBackground
+                        inputFrame.BackgroundTransparency = getTransparency("Element")
+                        inpStroke.Color = t.ElementBorder
+                        inpLabel.TextColor3 = t.TextPrimary
+                        textBox.BackgroundColor3 = t.InputBackground
+                        textBox.BackgroundTransparency = getTransparency("Input")
+                        textBox.TextColor3 = t.TextPrimary
+                        textBox.PlaceholderColor3 = t.TextMuted
+                        tbStroke.Color = t.InputBorder
+                    end)
 
                     textBox.Focused:Connect(function()
-                        Utilities.Tween(inputStroke, fastTween, { Color = currentTheme.InputFocusBorder, Transparency = 0 })
+                        Utilities.Tween(tbStroke, fastTween, { Color = currentTheme.InputFocusBorder, Transparency = 0 })
                     end)
                     textBox.FocusLost:Connect(function(enterPressed)
-                        Utilities.Tween(inputStroke, fastTween, { Color = currentTheme.InputBorder, Transparency = 0.3 })
-                        if enterPressed and config.Callback then
-                            pcall(config.Callback, textBox.Text)
-                        end
+                        Utilities.Tween(tbStroke, fastTween, { Color = currentTheme.InputBorder, Transparency = 0.3 })
+                        if enterPressed and inputConfig.Callback then pcall(inputConfig.Callback, textBox.Text) end
                     end)
                     textBox:GetPropertyChangedSignal("Text"):Connect(function()
-                        if config.onChanged then
-                            pcall(config.onChanged, textBox.Text)
-                        end
+                        if inputConfig.onChanged then pcall(inputConfig.onChanged, textBox.Text) end
                     end)
 
                     local input = {}
-                    function input:Set(text)
-                        textBox.Text = text
-                    end
-                    function input:Get()
-                        return textBox.Text
-                    end
-
+                    function input:Set(text) textBox.Text = text end
+                    function input:Get() return textBox.Text end
                     return input
                 end
 
-                -- ═══════════════════════════════════════
-                -- DROPDOWN
-                -- ═══════════════════════════════════════
-                function section:Dropdown(config, flag)
-                    config = config or {}
-                    local options = config.Options or {}
-                    local multi = config.Multi or false
-                    local searchEnabled = config.Search or false
+                -- ========== DROPDOWN ==========
+                function section:Dropdown(dropConfig, flag)
+                    dropConfig = dropConfig or {}
+                    local options = dropConfig.Options or {}
+                    local multi = dropConfig.Multi or false
                     local isOpen = false
 
                     local selectedValues = {}
-                    if multi and config.Default then
-                        for _, v in ipairs(config.Default) do
+                    if multi and dropConfig.Default then
+                        for _, v in ipairs(dropConfig.Default) do
                             selectedValues[v] = true
                         end
-                    elseif not multi and config.Default then
-                        if type(config.Default) == "number" then
-                            selectedValues = options[config.Default] or ""
+                    elseif not multi and dropConfig.Default then
+                        if type(dropConfig.Default) == "number" then
+                            selectedValues = options[dropConfig.Default] or ""
                         else
-                            selectedValues = config.Default
+                            selectedValues = dropConfig.Default
                         end
                     end
 
                     local dropFrame = Utilities.Create("Frame", {
-                        Name = "Dropdown_" .. (config.Name or "DD"),
+                        Name = "Dropdown_" .. (dropConfig.Name or "DD"),
                         Size = UDim2.new(1, 0, 0, 36),
                         BackgroundColor3 = currentTheme.ElementBackground,
+                        BackgroundTransparency = getTransparency("Element"),
                         ClipsDescendants = false,
                         Parent = sectionFrame
                     })
                     Utilities.AddCorner(dropFrame, 8)
-                    Utilities.AddStroke(dropFrame, currentTheme.ElementBorder, 1, 0.6)
+                    local ddStroke = Utilities.AddStroke(dropFrame, currentTheme.ElementBorder, 1, 0.6)
 
                     local dropBtn = Utilities.Create("TextButton", {
                         Name = "DropButton",
@@ -1665,12 +1958,12 @@ function VXClub:Window(config)
                         Parent = dropFrame
                     })
 
-                    Utilities.Create("TextLabel", {
+                    local ddLabel = Utilities.Create("TextLabel", {
                         Name = "Label",
                         Position = UDim2.new(0, 12, 0, 0),
                         Size = UDim2.new(0.6, -12, 0, 36),
                         BackgroundTransparency = 1,
-                        Text = config.Name or "Dropdown",
+                        Text = dropConfig.Name or "Dropdown",
                         TextColor3 = currentTheme.TextPrimary,
                         TextSize = 13,
                         Font = Enum.Font.GothamMedium,
@@ -1692,33 +1985,33 @@ function VXClub:Window(config)
                         Parent = dropBtn
                     })
 
-                    -- Arrow
                     local arrow = Utilities.Create("TextLabel", {
                         Name = "Arrow",
                         AnchorPoint = Vector2.new(1, 0.5),
                         Position = UDim2.new(1, -10, 0.5, 0),
                         Size = UDim2.fromOffset(12, 12),
                         BackgroundTransparency = 1,
-                        Text = "▼",
+                        Text = "\226\150\188",
                         TextColor3 = currentTheme.TextMuted,
                         TextSize = 10,
                         Font = Enum.Font.GothamBold,
                         Parent = dropBtn
                     })
 
-                    -- Options list
+                    -- Options list on screenGui
                     local optionsList = Utilities.Create("Frame", {
                         Name = "OptionsList",
-                        Position = UDim2.new(0, 0, 0, 40),
-                        Size = UDim2.new(1, 0, 0, 0),
+                        Size = UDim2.fromOffset(0, 0),
                         BackgroundColor3 = currentTheme.DropdownBackground,
+                        BackgroundTransparency = getTransparency("Dropdown"),
                         ClipsDescendants = true,
                         Visible = false,
-                        ZIndex = 50,
-                        Parent = dropFrame
+                        ZIndex = 80,
+                        Parent = screenGui
                     })
                     Utilities.AddCorner(optionsList, 8)
-                    Utilities.AddStroke(optionsList, currentTheme.ElementBorder, 1, 0.4)
+                    local olStroke = Utilities.AddStroke(optionsList, currentTheme.ElementBorder, 1, 0.4)
+                    Utilities.AddShadow(optionsList, currentTheme.Shadow, 0.5, 20)
 
                     local optionsScroll = Utilities.Create("ScrollingFrame", {
                         Name = "Scroll",
@@ -1729,11 +2022,31 @@ function VXClub:Window(config)
                         CanvasSize = UDim2.new(0, 0, 0, 0),
                         AutomaticCanvasSize = Enum.AutomaticSize.Y,
                         BorderSizePixel = 0,
-                        ZIndex = 51,
+                        ZIndex = 81,
                         Parent = optionsList
                     })
                     Utilities.AddPadding(optionsScroll, 4, 4, 4, 4)
                     Utilities.AddListLayout(optionsScroll, 2)
+
+                    local function positionDropdown()
+                        local absPos = dropFrame.AbsolutePosition
+                        local absSize = dropFrame.AbsoluteSize
+                        optionsList.Position = UDim2.fromOffset(absPos.X, absPos.Y + absSize.Y + 4)
+                        optionsList.Size = UDim2.fromOffset(absSize.X, 0)
+                    end
+
+                    registerElement(dropFrame, function(t)
+                        dropFrame.BackgroundColor3 = t.ElementBackground
+                        dropFrame.BackgroundTransparency = getTransparency("Element")
+                        ddStroke.Color = t.ElementBorder
+                        ddLabel.TextColor3 = t.TextPrimary
+                        displayLabel.TextColor3 = t.TextSecondary
+                        arrow.TextColor3 = t.TextMuted
+                        optionsList.BackgroundColor3 = t.DropdownBackground
+                        optionsList.BackgroundTransparency = getTransparency("Dropdown")
+                        olStroke.Color = t.ElementBorder
+                        optionsScroll.ScrollBarImageColor3 = t.ScrollbarColor
+                    end)
 
                     local dropdown = {}
 
@@ -1766,7 +2079,7 @@ function VXClub:Window(config)
                                 Font = Enum.Font.Gotham,
                                 TextXAlignment = Enum.TextXAlignment.Left,
                                 AutoButtonColor = false,
-                                ZIndex = 52,
+                                ZIndex = 82,
                                 Parent = optionsScroll
                             })
                             Utilities.AddCorner(optBtn, 6)
@@ -1778,19 +2091,20 @@ function VXClub:Window(config)
                             optBtn.MouseLeave:Connect(function()
                                 Utilities.Tween(optBtn, fastTween, { BackgroundColor3 = currentTheme.DropdownBackground, BackgroundTransparency = 0.5 })
                             end)
+
                             optBtn.MouseButton1Click:Connect(function()
                                 if multi then
                                     selectedValues[option] = not selectedValues[option]
                                     if not selectedValues[option] then selectedValues[option] = nil end
                                     updateDisplay()
-                                    if config.Callback then pcall(config.Callback, selectedValues) end
+                                    if dropConfig.Callback then pcall(dropConfig.Callback, selectedValues) end
                                 else
                                     selectedValues = option
                                     updateDisplay()
-                                    if config.Callback then pcall(config.Callback, option) end
-                                    -- Close
+                                    if dropConfig.Callback then pcall(dropConfig.Callback, option) end
                                     isOpen = false
-                                    Utilities.Tween(optionsList, fastTween, { Size = UDim2.new(1, 0, 0, 0) }).Completed:Connect(function()
+                                    local absWidth = dropFrame.AbsoluteSize.X
+                                    Utilities.Tween(optionsList, fastTween, { Size = UDim2.fromOffset(absWidth, 0) }).Completed:Connect(function()
                                         optionsList.Visible = false
                                     end)
                                     Utilities.Tween(arrow, fastTween, { Rotation = 0 })
@@ -1805,12 +2119,15 @@ function VXClub:Window(config)
                     dropBtn.MouseButton1Click:Connect(function()
                         isOpen = not isOpen
                         if isOpen then
+                            positionDropdown()
                             optionsList.Visible = true
                             local targetH = math.min(#options * 32 + 8, 180)
-                            Utilities.Tween(optionsList, smoothTween, { Size = UDim2.new(1, 0, 0, targetH) })
+                            local absWidth = dropFrame.AbsoluteSize.X
+                            Utilities.Tween(optionsList, smoothTween, { Size = UDim2.fromOffset(absWidth, targetH) })
                             Utilities.Tween(arrow, smoothTween, { Rotation = 180 })
                         else
-                            Utilities.Tween(optionsList, smoothTween, { Size = UDim2.new(1, 0, 0, 0) }).Completed:Connect(function()
+                            local absWidth = dropFrame.AbsoluteSize.X
+                            Utilities.Tween(optionsList, smoothTween, { Size = UDim2.fromOffset(absWidth, 0) }).Completed:Connect(function()
                                 optionsList.Visible = false
                             end)
                             Utilities.Tween(arrow, smoothTween, { Rotation = 0 })
@@ -1820,9 +2137,7 @@ function VXClub:Window(config)
                     function dropdown:UpdateSelection(value)
                         if multi then
                             selectedValues = {}
-                            for _, v in ipairs(value) do
-                                selectedValues[v] = true
-                            end
+                            for _, v in ipairs(value) do selectedValues[v] = true end
                         else
                             selectedValues = value
                         end
@@ -1837,29 +2152,28 @@ function VXClub:Window(config)
                     return dropdown
                 end
 
-                -- ═══════════════════════════════════════
-                -- KEYBIND
-                -- ═══════════════════════════════════════
-                function section:Keybind(config, flag)
-                    config = config or {}
-                    local currentBind = config.Default or nil
+                -- ========== KEYBIND ==========
+                function section:Keybind(kbConfig, flag)
+                    kbConfig = kbConfig or {}
+                    local currentBind = kbConfig.Default or nil
                     local listening = false
 
                     local kbFrame = Utilities.Create("Frame", {
-                        Name = "Keybind_" .. (config.Name or "KB"),
+                        Name = "Keybind_" .. (kbConfig.Name or "KB"),
                         Size = UDim2.new(1, 0, 0, 36),
                         BackgroundColor3 = currentTheme.ElementBackground,
+                        BackgroundTransparency = getTransparency("Element"),
                         Parent = sectionFrame
                     })
                     Utilities.AddCorner(kbFrame, 8)
-                    Utilities.AddStroke(kbFrame, currentTheme.ElementBorder, 1, 0.6)
+                    local kbStroke = Utilities.AddStroke(kbFrame, currentTheme.ElementBorder, 1, 0.6)
 
-                    Utilities.Create("TextLabel", {
+                    local kbLabel = Utilities.Create("TextLabel", {
                         Name = "Label",
                         Position = UDim2.new(0, 12, 0, 0),
                         Size = UDim2.new(0.6, -12, 1, 0),
                         BackgroundTransparency = 1,
-                        Text = config.Name or "Keybind",
+                        Text = kbConfig.Name or "Keybind",
                         TextColor3 = currentTheme.TextPrimary,
                         TextSize = 13,
                         Font = Enum.Font.GothamMedium,
@@ -1881,7 +2195,17 @@ function VXClub:Window(config)
                         Parent = kbFrame
                     })
                     Utilities.AddCorner(bindBtn, 6)
-                    Utilities.AddStroke(bindBtn, currentTheme.InputBorder, 1, 0.4)
+                    local bindStroke = Utilities.AddStroke(bindBtn, currentTheme.InputBorder, 1, 0.4)
+
+                    registerElement(kbFrame, function(t)
+                        kbFrame.BackgroundColor3 = t.ElementBackground
+                        kbFrame.BackgroundTransparency = getTransparency("Element")
+                        kbStroke.Color = t.ElementBorder
+                        kbLabel.TextColor3 = t.TextPrimary
+                        bindBtn.BackgroundColor3 = t.InputBackground
+                        bindBtn.TextColor3 = t.TextSecondary
+                        bindStroke.Color = t.InputBorder
+                    end)
 
                     local keybind = {}
 
@@ -1899,13 +2223,9 @@ function VXClub:Window(config)
                             bindBtn.Text = input.KeyCode.Name
                             Utilities.Tween(bindBtn, fastTween, { BackgroundColor3 = currentTheme.InputBackground })
                             bindBtn.TextColor3 = currentTheme.TextSecondary
-                            if config.onBinded then
-                                pcall(config.onBinded, input.KeyCode)
-                            end
+                            if kbConfig.onBinded then pcall(kbConfig.onBinded, input.KeyCode) end
                         elseif not listening and not gameProcessed and currentBind and input.KeyCode == currentBind then
-                            if config.Callback then
-                                pcall(config.Callback, currentBind)
-                            end
+                            if kbConfig.Callback then pcall(kbConfig.Callback, currentBind) end
                         end
                     end)
 
@@ -1917,29 +2237,28 @@ function VXClub:Window(config)
                     return keybind
                 end
 
-                -- ═══════════════════════════════════════
-                -- COLORPICKER
-                -- ═══════════════════════════════════════
-                function section:Colorpicker(config, flag)
-                    config = config or {}
-                    local currentColor = config.Default or Color3.fromRGB(255, 255, 255)
-                    local currentAlpha = config.Alpha or nil
+                -- ========== COLORPICKER ==========
+                function section:Colorpicker(cpConfig, flag)
+                    cpConfig = cpConfig or {}
+                    local currentColor = cpConfig.Default or Color3.fromRGB(255, 255, 255)
+                    local currentAlpha = cpConfig.Alpha or nil
 
                     local cpFrame = Utilities.Create("Frame", {
-                        Name = "Colorpicker_" .. (config.Name or "CP"),
+                        Name = "Colorpicker_" .. (cpConfig.Name or "CP"),
                         Size = UDim2.new(1, 0, 0, 36),
                         BackgroundColor3 = currentTheme.ElementBackground,
+                        BackgroundTransparency = getTransparency("Element"),
                         Parent = sectionFrame
                     })
                     Utilities.AddCorner(cpFrame, 8)
-                    Utilities.AddStroke(cpFrame, currentTheme.ElementBorder, 1, 0.6)
+                    local cpStroke = Utilities.AddStroke(cpFrame, currentTheme.ElementBorder, 1, 0.6)
 
-                    Utilities.Create("TextLabel", {
+                    local cpLabel = Utilities.Create("TextLabel", {
                         Name = "Label",
                         Position = UDim2.new(0, 12, 0, 0),
                         Size = UDim2.new(0.7, -12, 1, 0),
                         BackgroundTransparency = 1,
-                        Text = config.Name or "Color Picker",
+                        Text = cpConfig.Name or "Color Picker",
                         TextColor3 = currentTheme.TextPrimary,
                         TextSize = 13,
                         Font = Enum.Font.GothamMedium,
@@ -1958,16 +2277,23 @@ function VXClub:Window(config)
                     Utilities.AddCorner(preview, 5)
                     Utilities.AddStroke(preview, currentTheme.ElementBorder, 1, 0.5)
 
+                    registerElement(cpFrame, function(t)
+                        cpFrame.BackgroundColor3 = t.ElementBackground
+                        cpFrame.BackgroundTransparency = getTransparency("Element")
+                        cpStroke.Color = t.ElementBorder
+                        cpLabel.TextColor3 = t.TextPrimary
+                    end)
+
                     local colorpicker = {}
 
                     function colorpicker:SetColor(color)
                         currentColor = color
                         preview.BackgroundColor3 = color
-                        if config.Callback then
+                        if cpConfig.Callback then
                             if currentAlpha ~= nil then
-                                pcall(config.Callback, color, currentAlpha)
+                                pcall(cpConfig.Callback, color, currentAlpha)
                             else
-                                pcall(config.Callback, color)
+                                pcall(cpConfig.Callback, color)
                             end
                         end
                     end
@@ -1976,7 +2302,6 @@ function VXClub:Window(config)
                         return currentColor
                     end
 
-                    -- Simple color picker via click (opens palette)
                     local previewBtn = Utilities.Create("TextButton", {
                         Name = "Click",
                         Size = UDim2.new(1, 0, 1, 0),
@@ -1996,29 +2321,30 @@ function VXClub:Window(config)
                         end
 
                         paletteOpen = true
+                        local previewAbsPos = preview.AbsolutePosition
+                        local previewAbsSize = preview.AbsoluteSize
                         palette = Utilities.Create("Frame", {
                             Name = "Palette",
-                            Position = UDim2.new(1, -10, 1, 6),
-                            AnchorPoint = Vector2.new(1, 0),
+                            Position = UDim2.fromOffset(previewAbsPos.X + previewAbsSize.X - 200, previewAbsPos.Y + previewAbsSize.Y + 6),
                             Size = UDim2.fromOffset(200, 150),
                             BackgroundColor3 = currentTheme.DropdownBackground,
-                            ZIndex = 60,
-                            Parent = cpFrame
+                            BackgroundTransparency = getTransparency("Dropdown"),
+                            ZIndex = 80,
+                            Parent = screenGui
                         })
                         Utilities.AddCorner(palette, 8)
                         Utilities.AddStroke(palette, currentTheme.ElementBorder, 1, 0.4)
                         Utilities.AddPadding(palette, 8, 8, 8, 8)
 
-                        -- Color grid
                         local colorGrid = Utilities.Create("Frame", {
                             Name = "Grid",
                             Size = UDim2.new(1, 0, 1, 0),
                             BackgroundTransparency = 1,
-                            ZIndex = 61,
+                            ZIndex = 81,
                             Parent = palette
                         })
 
-                        local gridLayout = Utilities.Create("UIGridLayout", {
+                        Utilities.Create("UIGridLayout", {
                             CellPadding = UDim2.fromOffset(4, 4),
                             CellSize = UDim2.fromOffset(22, 22),
                             FillDirection = Enum.FillDirection.Horizontal,
@@ -2041,11 +2367,10 @@ function VXClub:Window(config)
                                 BackgroundColor3 = col,
                                 Text = "",
                                 AutoButtonColor = false,
-                                ZIndex = 62,
+                                ZIndex = 82,
                                 Parent = colorGrid
                             })
                             Utilities.AddCorner(colorBtn, 5)
-
                             colorBtn.MouseButton1Click:Connect(function()
                                 colorpicker:SetColor(col)
                                 palette:Destroy()
@@ -2057,11 +2382,9 @@ function VXClub:Window(config)
                     return colorpicker
                 end
 
-                -- ═══════════════════════════════════════
-                -- PARAGRAPH
-                -- ═══════════════════════════════════════
-                function section:Paragraph(config)
-                    config = config or {}
+                -- ========== PARAGRAPH ==========
+                function section:Paragraph(paraConfig)
+                    paraConfig = paraConfig or {}
                     local paraFrame = Utilities.Create("Frame", {
                         Name = "Paragraph",
                         Size = UDim2.new(1, 0, 0, 0),
@@ -2071,25 +2394,26 @@ function VXClub:Window(config)
                     })
                     Utilities.AddListLayout(paraFrame, 4)
 
-                    if config.Header then
-                        Utilities.Create("TextLabel", {
+                    if paraConfig.Header then
+                        local ph = Utilities.Create("TextLabel", {
                             Size = UDim2.new(1, 0, 0, 18),
                             BackgroundTransparency = 1,
-                            Text = config.Header,
+                            Text = paraConfig.Header,
                             TextColor3 = currentTheme.TextPrimary,
                             TextSize = 14,
                             Font = Enum.Font.GothamBold,
                             TextXAlignment = Enum.TextXAlignment.Left,
                             Parent = paraFrame
                         })
+                        registerElement(ph, function(t) ph.TextColor3 = t.TextPrimary end)
                     end
 
-                    if config.Body then
-                        Utilities.Create("TextLabel", {
+                    if paraConfig.Body then
+                        local pb = Utilities.Create("TextLabel", {
                             Size = UDim2.new(1, 0, 0, 0),
                             AutomaticSize = Enum.AutomaticSize.Y,
                             BackgroundTransparency = 1,
-                            Text = config.Body,
+                            Text = paraConfig.Body,
                             TextColor3 = currentTheme.TextSecondary,
                             TextSize = 12,
                             Font = Enum.Font.Gotham,
@@ -2097,50 +2421,49 @@ function VXClub:Window(config)
                             TextWrapped = true,
                             Parent = paraFrame
                         })
+                        registerElement(pb, function(t) pb.TextColor3 = t.TextSecondary end)
                     end
                 end
 
-                -- ═══════════════════════════════════════
-                -- LABEL
-                -- ═══════════════════════════════════════
-                function section:Label(config)
-                    config = config or {}
-                    return Utilities.Create("TextLabel", {
+                -- ========== LABEL ==========
+                function section:Label(labelConfig)
+                    labelConfig = labelConfig or {}
+                    local lbl = Utilities.Create("TextLabel", {
                         Name = "Label",
                         Size = UDim2.new(1, 0, 0, 18),
                         BackgroundTransparency = 1,
-                        Text = config.Text or "Label",
+                        Text = labelConfig.Text or "Label",
                         TextColor3 = currentTheme.TextPrimary,
                         TextSize = 13,
                         Font = Enum.Font.GothamMedium,
                         TextXAlignment = Enum.TextXAlignment.Left,
                         Parent = sectionFrame
                     })
+                    registerElement(lbl, function(t) lbl.TextColor3 = t.TextPrimary end)
+                    return lbl
                 end
 
-                -- ═══════════════════════════════════════
-                -- SUBLABEL
-                -- ═══════════════════════════════════════
-                function section:SubLabel(config)
-                    config = config or {}
-                    return Utilities.Create("TextLabel", {
+                -- ========== SUBLABEL ==========
+                function section:SubLabel(subConfig)
+                    subConfig = subConfig or {}
+                    local sl = Utilities.Create("TextLabel", {
                         Name = "SubLabel",
                         Size = UDim2.new(1, 0, 0, 14),
                         BackgroundTransparency = 1,
-                        Text = config.Text or "Sub-Label",
+                        Text = subConfig.Text or "Sub-Label",
                         TextColor3 = currentTheme.TextMuted,
                         TextSize = 11,
                         Font = Enum.Font.Gotham,
                         TextXAlignment = Enum.TextXAlignment.Left,
                         Parent = sectionFrame
                     })
+                    registerElement(sl, function(t) sl.TextColor3 = t.TextMuted end)
+                    return sl
                 end
 
-                -- ═══════════════════════════════════════
-                -- DIVIDER
-                -- ═══════════════════════════════════════
+                -- ========== DIVIDER ==========
                 function section:Divider()
-                    return Utilities.Create("Frame", {
+                    local div = Utilities.Create("Frame", {
                         Name = "Divider",
                         Size = UDim2.new(1, 0, 0, 1),
                         BackgroundColor3 = currentTheme.DividerColor,
@@ -2148,15 +2471,17 @@ function VXClub:Window(config)
                         BorderSizePixel = 0,
                         Parent = sectionFrame
                     })
+                    registerElement(div, function(t) div.BackgroundColor3 = t.DividerColor end)
+                    return div
                 end
 
                 table.insert(tab.Sections, section)
                 return section
             end
 
-            -- ═══════════════════════════════════════
+            -- ================================================================
             -- CONFIG SECTION (Settings tab)
-            -- ═══════════════════════════════════════
+            -- ================================================================
             function tab:InsertConfigSection(side)
                 local configSection = tab:Section({ Side = side or "Left" })
                 configSection:Header({ Name = "Configuration" })
@@ -2188,42 +2513,40 @@ function VXClub:Window(config)
 
                 configSection:Divider()
 
-                -- Theme toggle
+                -- Theme selector (Dark, White, + all gradient themes)
+                local themeNames = VXClub:GetThemeNames()
+
                 configSection:Dropdown({
                     Name = "Theme",
-                    Options = {"Dark", "White"},
-                    Default = (currentTheme.Name == "Dark") and 1 or 2,
+                    Options = themeNames,
+                    Default = currentTheme.Name,
                     Callback = function(value)
                         Window:SetTheme(value)
                         Window:Notify({
                             Title = windowConfig.Title,
                             Description = "Switched to " .. value .. " theme",
-                            Lifetime = 3
+                            Lifetime = 3,
+                            Gradient = Gradients[value] and value or nil
                         })
                     end
                 })
 
-                -- Gradient accent selector
-                local gradientNames = {}
-                for name in pairs(Gradients) do
-                    table.insert(gradientNames, name)
-                end
-                table.sort(gradientNames)
-
-                configSection:Dropdown({
-                    Name = "Accent Gradient",
-                    Options = gradientNames,
-                    Default = 1,
+                -- Liquid Glass toggle
+                configSection:Toggle({
+                    Name = "Liquid Glass",
+                    Default = liquidGlassEnabled,
                     Callback = function(value)
-                        Window:SetAccentGradient(value)
+                        Window:SetLiquidGlass(value)
                         Window:Notify({
                             Title = windowConfig.Title,
-                            Description = "Accent set to " .. value,
+                            Description = (value and "Enabled" or "Disabled") .. " Liquid Glass",
                             Lifetime = 3,
-                            Gradient = value
+                            Gradient = "Frost"
                         })
-                    end
+                    end,
                 })
+
+                configSection:Divider()
 
                 -- Global settings toggles
                 for _, gs in ipairs(Window.GlobalSettings) do
@@ -2248,13 +2571,13 @@ function VXClub:Window(config)
         return tabGroup
     end
 
-    -- Config management placeholder
+    -- Config management
     function Window:SetFolder(folder)
         SaveFolder = folder
     end
 
     function Window:LoadAutoLoadConfig()
-        -- Placeholder for auto-loading configs
+        -- Placeholder
     end
 
     table.insert(ActiveWindows, Window)
